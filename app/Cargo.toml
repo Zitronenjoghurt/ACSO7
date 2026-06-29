@@ -1,0 +1,9 @@
+[package]
+name = "acso7-app"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+
+[dependencies]
+acso7 = { workspace = true }
+ratatui = { workspace = true, default-features = true }
