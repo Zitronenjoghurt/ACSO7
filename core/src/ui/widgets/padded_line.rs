@@ -1,10 +1,12 @@
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::prelude::{Line, Widget};
+use ratatui::style::Style;
 
 pub struct PaddedLine<'a> {
     pub text: &'a str,
     pub padding_symbol: Option<char>,
+    pub style: Style,
 }
 
 impl<'a> PaddedLine<'a> {
@@ -12,11 +14,17 @@ impl<'a> PaddedLine<'a> {
         Self {
             text,
             padding_symbol: None,
+            style: Style::default(),
         }
     }
 
     pub fn padding_symbol(mut self, symbol: char) -> Self {
         self.padding_symbol = Some(symbol);
+        self
+    }
+
+    pub fn style(mut self, style: Style) -> Self {
+        self.style = style;
         self
     }
 }
@@ -33,6 +41,6 @@ impl Widget for PaddedLine<'_> {
             }
             None => Line::from(self.text).centered(),
         };
-        line.render(area, buf);
+        line.style(self.style).render(area, buf);
     }
 }
