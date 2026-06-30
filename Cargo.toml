@@ -9,7 +9,7 @@ version = "0.1.0"
 
 [workspace.dependencies]
 acso7 = { path = "core" }
-jiff = "0.2.29"
+jiff = { version = "0.2.29", features = ["serde"] }
 ratatui = { version = "0.30.2", default-features = false }
-serde = { version = "1.0.228", features = ["derive"] }#
+serde = { version = "1.0.228", features = ["derive"] }
 thiserror = "2.0.18"

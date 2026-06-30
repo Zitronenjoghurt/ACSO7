@@ -1,59 +1,92 @@
+use crate::config::Config;
 use crate::error::Acos7Result;
 use crate::input::Input;
-use crate::persistence::CompressedSerde;
+use crate::persistence::{CompressedSerde, PersistenceBackend, WorldStore};
+use crate::ui::effects::Effects;
+use crate::ui::{ScreenId, UiState};
+use crate::world::{World, WorldId};
 
 #[derive(Debug)]
 pub struct App {
+    pub config: Config,
+    pub effects: Effects,
+    pub last_frame: jiff::Timestamp,
+    pub last_autosave: jiff::Timestamp,
     pub should_quit: bool,
-    pub store: crate::store::Store,
-    pub title_selected: usize,
-    pub effects: crate::ui::effects::Effects,
-    last_frame: jiff::Timestamp,
-    persistence: Box<dyn crate::persistence::PersistenceBackend>,
-}
-
-impl Default for App {
-    fn default() -> Self {
-        let mut app = Self {
-            store: crate::store::Store::default(),
-            should_quit: false,
-            title_selected: 0,
-            effects: crate::ui::effects::Effects::default(),
-            last_frame: jiff::Timestamp::now(),
-            persistence: Box::new(crate::persistence::NullBackend),
-        };
-        app.store.current_screen.on_enter(&mut app);
-        app
-    }
+    pub ui: UiState,
+    pub world: World,
+    persistence: Box<dyn PersistenceBackend>,
 }
 
 impl App {
-    pub fn new(persistence: Box<dyn crate::persistence::PersistenceBackend>) -> Acos7Result<Self> {
-        let store = match persistence.load_latest_stamped("base") {
-            Some(bytes) => crate::store::Store::from_compressed(&bytes)?,
-            None => crate::store::Store::default(),
+    pub fn new(persistence: Box<dyn PersistenceBackend>) -> Acos7Result<Self> {
+        let config = match persistence.load(&["config"]) {
+            Some(bytes) => Config::from_compressed(&bytes).unwrap_or_default(),
+            None => Config::default(),
         };
+        let now = jiff::Timestamp::now();
         let mut app = Self {
-            store,
+            config,
+            effects: Effects::default(),
+            last_frame: now,
+            last_autosave: now,
             should_quit: false,
-            title_selected: 0,
-            effects: crate::ui::effects::Effects::default(),
-            last_frame: jiff::Timestamp::now(),
+            ui: UiState::default(),
+            world: World::default(),
             persistence,
         };
-        app.store.current_screen.on_enter(&mut app);
+        app.ui.current_screen.on_enter(&mut app);
         Ok(app)
     }
 
-    pub fn update(&mut self) {}
+    pub fn refresh_worlds(&mut self) {
+        self.ui.saved_worlds = WorldStore::new(self.persistence.as_ref()).list_meta();
+    }
 
-    pub fn goto(&mut self, screen: crate::ui::ScreenId) {
-        self.store.current_screen = screen;
+    pub fn create_world(&mut self, name: impl Into<String>) {
+        self.world = World::new(name);
+        self.last_autosave = jiff::Timestamp::now();
+    }
+
+    pub fn load_world(&mut self, id: &WorldId) -> bool {
+        match WorldStore::new(self.persistence.as_ref()).load_latest(id) {
+            Some(world) => {
+                self.world = world;
+                self.last_autosave = jiff::Timestamp::now();
+                true
+            }
+            None => false,
+        }
+    }
+
+    pub fn autosave(&mut self) -> Acos7Result<()> {
+        if !self.world.meta.id.is_empty() {
+            self.world.meta.last_played = jiff::Timestamp::now();
+            WorldStore::new(self.persistence.as_ref())
+                .save(&self.world, self.config.max_auto_saves)?;
+        }
+        Ok(())
+    }
+
+    pub fn update(&mut self) {
+        let interval = self.config.autosave_interval_secs;
+        if interval == 0 || self.world.meta.id.is_empty() {
+            return;
+        }
+        let now = jiff::Timestamp::now();
+        if now.duration_since(self.last_autosave).as_secs() >= interval as i64 {
+            let _ = self.autosave();
+            self.last_autosave = now;
+        }
+    }
+
+    pub fn goto(&mut self, screen: ScreenId) {
+        self.ui.current_screen = screen;
         screen.on_enter(self);
     }
 
     pub fn render(&mut self, frame: &mut ratatui::Frame) {
-        self.store.current_screen.render(self, frame);
+        self.ui.current_screen.render(self, frame);
 
         let now = jiff::Timestamp::now();
         let elapsed_ms = now.duration_since(self.last_frame).as_millis();
@@ -66,9 +99,9 @@ impl App {
     }
 
     pub fn save(&mut self) -> Acos7Result<()> {
-        let bytes = self.store.to_compressed()?;
         self.persistence
-            .stamped_save("base", bytes, self.store.config.max_auto_saves);
+            .save(&["config"], self.config.to_compressed()?);
+        self.autosave()?;
         Ok(())
     }
 
@@ -77,10 +110,7 @@ impl App {
     }
 
     pub fn on_input(&mut self, input: Input) {
-        match input {
-            Input::Char('q') => self.should_quit = true,
-            _ => self.store.current_screen.on_input(self, input),
-        }
+        self.ui.current_screen.on_input(self, input);
     }
 }
 
