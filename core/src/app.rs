@@ -10,8 +10,9 @@ use crate::world::{World, WorldId};
 pub struct App {
     pub config: Config,
     pub effects: Effects,
-    pub last_frame: jiff::Timestamp,
     pub last_autosave: jiff::Timestamp,
+    pub last_frame: jiff::Timestamp,
+    pub last_update: jiff::Timestamp,
     pub should_quit: bool,
     pub ui: UiState,
     pub world: World,
@@ -28,8 +29,9 @@ impl App {
         let mut app = Self {
             config,
             effects: Effects::default(),
-            last_frame: now,
             last_autosave: now,
+            last_frame: now,
+            last_update: now,
             should_quit: false,
             ui: UiState::default(),
             world: World::default(),
@@ -37,6 +39,59 @@ impl App {
         };
         app.ui.current_screen.on_enter(&mut app);
         Ok(app)
+    }
+
+    pub fn update(&mut self) {
+        let now = jiff::Timestamp::now();
+        if self.config.autosave_interval_secs != 0
+            && !self.world.meta.id.is_empty()
+            && now.duration_since(self.last_autosave).as_secs()
+                >= self.config.autosave_interval_secs as i64
+        {
+            let _ = self.save();
+            self.last_autosave = now;
+        }
+
+        let dt = now
+            .duration_since(self.last_update)
+            .as_secs_f64()
+            .clamp(0.0, self.config.max_tick_delta_secs);
+        self.world.tick(dt);
+        self.last_update += jiff::SignedDuration::from_secs_f64(dt);
+    }
+
+    pub fn render(&mut self, frame: &mut ratatui::Frame) {
+        self.ui.current_screen.render(self, frame);
+
+        let now = jiff::Timestamp::now();
+        let elapsed_ms = now.duration_since(self.last_frame).as_millis();
+        self.last_frame = now;
+        let delta = tachyonfx::Duration::from_millis(elapsed_ms.clamp(0, u32::MAX as i128) as u32);
+
+        let area = frame.area();
+        self.effects
+            .process_effects(delta, frame.buffer_mut(), area);
+    }
+
+    pub fn goto(&mut self, screen: ScreenId) {
+        self.ui.current_screen = screen;
+        screen.on_enter(self);
+    }
+
+    pub fn autosave(&mut self) -> Acos7Result<()> {
+        if !self.world.meta.id.is_empty() {
+            self.world.meta.last_played = jiff::Timestamp::now();
+            WorldStore::new(self.persistence.as_ref())
+                .save(&self.world, self.config.max_auto_saves)?;
+        }
+        Ok(())
+    }
+
+    pub fn save(&mut self) -> Acos7Result<()> {
+        self.persistence
+            .save(&["config"], self.config.to_compressed()?);
+        self.autosave()?;
+        Ok(())
     }
 
     pub fn refresh_worlds(&mut self) {
@@ -57,52 +112,6 @@ impl App {
             }
             None => false,
         }
-    }
-
-    pub fn autosave(&mut self) -> Acos7Result<()> {
-        if !self.world.meta.id.is_empty() {
-            self.world.meta.last_played = jiff::Timestamp::now();
-            WorldStore::new(self.persistence.as_ref())
-                .save(&self.world, self.config.max_auto_saves)?;
-        }
-        Ok(())
-    }
-
-    pub fn update(&mut self) {
-        let interval = self.config.autosave_interval_secs;
-        if interval == 0 || self.world.meta.id.is_empty() {
-            return;
-        }
-        let now = jiff::Timestamp::now();
-        if now.duration_since(self.last_autosave).as_secs() >= interval as i64 {
-            let _ = self.autosave();
-            self.last_autosave = now;
-        }
-    }
-
-    pub fn goto(&mut self, screen: ScreenId) {
-        self.ui.current_screen = screen;
-        screen.on_enter(self);
-    }
-
-    pub fn render(&mut self, frame: &mut ratatui::Frame) {
-        self.ui.current_screen.render(self, frame);
-
-        let now = jiff::Timestamp::now();
-        let elapsed_ms = now.duration_since(self.last_frame).as_millis();
-        self.last_frame = now;
-        let delta = tachyonfx::Duration::from_millis(elapsed_ms.clamp(0, u32::MAX as i128) as u32);
-
-        let area = frame.area();
-        self.effects
-            .process_effects(delta, frame.buffer_mut(), area);
-    }
-
-    pub fn save(&mut self) -> Acos7Result<()> {
-        self.persistence
-            .save(&["config"], self.config.to_compressed()?);
-        self.autosave()?;
-        Ok(())
     }
 
     pub fn should_quit(&self) -> bool {

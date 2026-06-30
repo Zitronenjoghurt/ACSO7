@@ -2,6 +2,7 @@ use crate::app::App;
 use crate::input::Input;
 use crate::ui::screens::{Screen, ScreenId};
 use crate::ui::theme::ThemeStyles;
+use crate::world::ship::resources::ShipResource;
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::prelude::{Line, Text, Widget};
@@ -23,9 +24,15 @@ impl Screen for ShipScreen {
         Text::from(Line::from(app.world.meta.name.clone()).style(theme.good()))
             .centered()
             .render(name, buf);
-        Text::from(Line::from(format!("POWER: {:.1}", app.world.ship.res.power)).style(theme.normal()))
-            .centered()
-            .render(power, buf);
+        Text::from(
+            Line::from(format!(
+                "POWER: {:.1}",
+                app.world.ship.res.get(&ShipResource::Power)
+            ))
+            .style(theme.normal()),
+        )
+        .centered()
+        .render(power, buf);
     }
 
     fn on_input(app: &mut App, input: Input) {

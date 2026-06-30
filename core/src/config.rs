@@ -4,6 +4,7 @@ use crate::ui::theme::Theme;
 pub struct Config {
     pub autosave_interval_secs: u64,
     pub max_auto_saves: usize,
+    pub max_tick_delta_secs: f64,
     pub theme: Theme,
 }
 
@@ -12,6 +13,7 @@ impl Default for Config {
         Self {
             autosave_interval_secs: 60,
             max_auto_saves: 10,
+            max_tick_delta_secs: 5.0,
             theme: Theme::default(),
         }
     }

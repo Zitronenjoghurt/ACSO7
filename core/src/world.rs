@@ -1,3 +1,4 @@
+pub mod colonist;
 pub mod ship;
 
 use jiff::{Timestamp, Zoned};
@@ -36,5 +37,12 @@ impl World {
             meta: WorldMeta::new(name),
             ship: ship::Ship::default(),
         }
+    }
+}
+
+// Tick
+impl World {
+    pub fn tick(&mut self, dt: f64) {
+        self.ship.tick(dt);
     }
 }
