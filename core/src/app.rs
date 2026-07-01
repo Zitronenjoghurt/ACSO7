@@ -3,7 +3,7 @@ use crate::error::Acos7Result;
 use crate::input::Input;
 use crate::persistence::{CompressedSerde, PersistenceBackend, WorldStore};
 use crate::ui::effects::Effects;
-use crate::ui::{ScreenId, UiState};
+use crate::ui::{ScreenId, ShipFocus, UiState};
 use crate::world::{World, WorldId};
 
 #[derive(Debug)]
@@ -56,7 +56,9 @@ impl App {
             .duration_since(self.last_update)
             .as_secs_f64()
             .clamp(0.0, self.config.max_tick_delta_secs);
-        self.world.tick(dt);
+        if !self.world.meta.id.is_empty() {
+            self.world.tick(dt);
+        }
         self.last_update += jiff::SignedDuration::from_secs_f64(dt);
     }
 
@@ -76,6 +78,12 @@ impl App {
     pub fn goto(&mut self, screen: ScreenId) {
         self.ui.current_screen = screen;
         screen.on_enter(self);
+    }
+
+    pub fn enter_ship(&mut self) {
+        self.ui.ship_focus = ShipFocus::Sidebar;
+        self.ui.log.push("all systems nominal");
+        self.goto(ScreenId::Reactor);
     }
 
     pub fn autosave(&mut self) -> Acos7Result<()> {

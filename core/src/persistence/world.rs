@@ -1,5 +1,6 @@
 use super::{CompressedSerde, PersistenceBackend};
 use crate::error::Acos7Result;
+use crate::world::ship::resources::ShipResource;
 use crate::world::{World, WorldMeta};
 use jiff::Zoned;
 
@@ -51,8 +52,10 @@ impl<'a> WorldStore<'a> {
         stamps.sort();
         for stamp in stamps.into_iter().rev() {
             if let Some(bytes) = self.backend.load(&auto_key(id, &stamp))
-                && let Ok(world) = World::from_compressed(&bytes)
+                && let Ok(mut world) = World::from_compressed(&bytes)
             {
+                world.ship.res.set(ShipResource::Deuterium, 10000.0);
+                world.ship.res.set(ShipResource::Helium3, 10000.0);
                 return Some(world);
             }
         }

@@ -1,10 +1,10 @@
 use crate::app::App;
 use crate::input::Input;
 use crate::ui::screens::{Screen, ScreenId};
-use crate::ui::theme::ThemeStyles;
+use crate::ui::widgets::select_list::SelectList;
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Layout, Rect};
-use ratatui::prelude::{Line, Text, Widget};
+use ratatui::prelude::Widget;
 
 pub struct LoadScreen;
 
@@ -21,32 +21,21 @@ impl Screen for LoadScreen {
         ])
         .areas(area);
 
-        if app.ui.saved_worlds.is_empty() {
-            Text::from(Line::from("NO SAVED COLONIES").style(theme.normal()))
-                .centered()
-                .render(list, buf);
-            return;
-        }
-
-        let lines: Vec<Line> = app
+        let labels = app
             .ui
             .saved_worlds
             .iter()
-            .enumerate()
-            .map(|(i, meta)| {
+            .map(|meta| {
                 let played = meta
                     .last_played
                     .to_zoned(jiff::tz::TimeZone::system())
                     .strftime("%Y-%m-%d %H:%M:%S");
-                let label = format!("{}  ({played})", meta.name);
-                if i == selected {
-                    Line::from(format!("▶ {label} ◀")).style(theme.good())
-                } else {
-                    Line::from(label).style(theme.normal())
-                }
+                format!("{}  ({played})", meta.name)
             })
             .collect();
-        Text::from(lines).centered().render(list, buf);
+        SelectList::new(theme, labels, selected)
+            .empty("NO SAVED COLONIES")
+            .render(list, buf);
     }
 
     fn on_input(app: &mut App, input: Input) {
@@ -68,7 +57,7 @@ impl Screen for LoadScreen {
             Input::Enter => {
                 let id = app.ui.saved_worlds[app.ui.menu_selected].id.clone();
                 if app.load_world(&id) {
-                    app.goto(ScreenId::Ship);
+                    app.enter_ship();
                 }
             }
             Input::Esc => app.goto(ScreenId::Title),

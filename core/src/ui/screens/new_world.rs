@@ -46,7 +46,7 @@ impl Screen for NewWorldScreen {
                 let name = app.ui.new_world_name.trim().to_string();
                 if !name.is_empty() {
                     app.create_world(name);
-                    app.goto(ScreenId::Ship);
+                    app.enter_ship();
                 }
             }
             Input::Esc => app.goto(ScreenId::Title),

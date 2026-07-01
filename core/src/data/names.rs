@@ -1,4 +1,16 @@
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize, strum::EnumIter, strum::EnumCount, strum::FromRepr)]
+#[derive(
+    Debug,
+    Copy,
+    Clone,
+    PartialEq,
+    Eq,
+    Hash,
+    serde::Serialize,
+    serde::Deserialize,
+    strum::EnumIter,
+    strum::EnumCount,
+    strum::FromRepr,
+)]
 #[serde(into = "u8", try_from = "u8")]
 #[repr(u8)]
 pub enum Region {
@@ -164,7 +176,19 @@ impl Region {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize, strum::EnumIter, strum::EnumCount, strum::FromRepr)]
+#[derive(
+    Debug,
+    Copy,
+    Clone,
+    PartialEq,
+    Eq,
+    Hash,
+    serde::Serialize,
+    serde::Deserialize,
+    strum::EnumIter,
+    strum::EnumCount,
+    strum::FromRepr,
+)]
 #[serde(into = "u16", try_from = "u16")]
 #[repr(u16)]
 pub enum FirstName {
@@ -2814,6 +2838,13 @@ pub enum FirstName {
     Rani = 2643,
     Saar = 2644,
     Shlomit = 2645,
+    Aidan = 2646,
+    Aiden = 2647,
+    Nascimo = 2648,
+    Evie = 2649,
+    Squishy = 2650,
+    Mister = 2651,
+    Misses = 2652,
 }
 
 impl FirstName {
@@ -5465,6 +5496,13 @@ impl FirstName {
             FirstName::Rani => "Rani",
             FirstName::Saar => "Saar",
             FirstName::Shlomit => "Shlomit",
+            FirstName::Aidan => "Aidan",
+            FirstName::Aiden => "Aiden",
+            FirstName::Nascimo => "Nascimo",
+            FirstName::Evie => "Evie",
+            FirstName::Squishy => "Squishy",
+            FirstName::Mister => "Mister",
+            FirstName::Misses => "Misses",
         }
     }
 }
@@ -5482,7 +5520,19 @@ impl TryFrom<u16> for FirstName {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize, strum::EnumIter, strum::EnumCount, strum::FromRepr)]
+#[derive(
+    Debug,
+    Copy,
+    Clone,
+    PartialEq,
+    Eq,
+    Hash,
+    serde::Serialize,
+    serde::Deserialize,
+    strum::EnumIter,
+    strum::EnumCount,
+    strum::FromRepr,
+)]
 #[serde(into = "u16", try_from = "u16")]
 #[repr(u16)]
 pub enum LastName {
@@ -7279,6 +7329,8 @@ pub enum LastName {
     Steinbergs = 1790,
     Berga = 1791,
     Birznieks = 1792,
+    Balls = 1793,
+    Folk = 1794,
 }
 
 impl LastName {
@@ -9077,6 +9129,8 @@ impl LastName {
             LastName::Steinbergs => "Steinbergs",
             LastName::Berga => "Berga",
             LastName::Birznieks => "Birznieks",
+            LastName::Balls => "Balls",
+            LastName::Folk => "Folk",
         }
     }
 }
@@ -9094,7 +9148,7 @@ impl TryFrom<u16> for LastName {
     }
 }
 
-static FEMALE_ANGLO: [(FirstName, u32); 100] = [
+static FEMALE_ANGLO: [(FirstName, u32); 103] = [
     (FirstName::Sarah, 49548),
     (FirstName::Laura, 33722),
     (FirstName::Lisa, 28551),
@@ -9195,6 +9249,9 @@ static FEMALE_ANGLO: [(FirstName, u32); 100] = [
     (FirstName::Alice, 4698),
     (FirstName::Becky, 4677),
     (FirstName::Diana, 4609),
+    (FirstName::Evie, 3000),
+    (FirstName::Squishy, 500),
+    (FirstName::Misses, 100),
 ];
 
 static FEMALE_HISPANIC: [(FirstName, u32); 100] = [
@@ -11154,7 +11211,7 @@ static FEMALE_AFRICAN: [(FirstName, u32); 100] = [
     (FirstName::Diana, 201),
 ];
 
-static MALE_ANGLO: [(FirstName, u32); 100] = [
+static MALE_ANGLO: [(FirstName, u32); 103] = [
     (FirstName::David, 89366),
     (FirstName::Chris, 81681),
     (FirstName::Michael, 81093),
@@ -11255,6 +11312,9 @@ static MALE_ANGLO: [(FirstName, u32); 100] = [
     (FirstName::Jesse, 6822),
     (FirstName::Jose, 6799),
     (FirstName::Ross, 6789),
+    (FirstName::Aidan, 2000),
+    (FirstName::Aiden, 1000),
+    (FirstName::Mister, 100),
 ];
 
 static MALE_HISPANIC: [(FirstName, u32); 100] = [
@@ -11360,7 +11420,7 @@ static MALE_HISPANIC: [(FirstName, u32); 100] = [
     (FirstName::Tomas, 2877),
 ];
 
-static MALE_LUSOPHONE: [(FirstName, u32); 100] = [
+static MALE_LUSOPHONE: [(FirstName, u32); 101] = [
     (FirstName::Joao, 12362),
     (FirstName::Lucas, 12123),
     (FirstName::Bruno, 10086),
@@ -11461,6 +11521,7 @@ static MALE_LUSOPHONE: [(FirstName, u32); 100] = [
     (FirstName::Everton, 1009),
     (FirstName::Breno, 999),
     (FirstName::Rafa, 940),
+    (FirstName::Nascimo, 300),
 ];
 
 static MALE_FRANCOPHONE: [(FirstName, u32); 100] = [
@@ -13214,7 +13275,7 @@ static MALE_AFRICAN: [(FirstName, u32); 100] = [
     (FirstName::Andre, 478),
 ];
 
-static LAST_ANGLO: [(LastName, u32); 100] = [
+static LAST_ANGLO: [(LastName, u32); 102] = [
     (LastName::Smith, 77581),
     (LastName::Jones, 52432),
     (LastName::Williams, 45145),
@@ -13315,6 +13376,8 @@ static LAST_ANGLO: [(LastName, u32); 100] = [
     (LastName::Diaz, 4507),
     (LastName::Sullivan, 4407),
     (LastName::Reed, 4296),
+    (LastName::Folk, 500),
+    (LastName::Balls, 100),
 ];
 
 static LAST_HISPANIC: [(LastName, u32); 100] = [

@@ -3,10 +3,11 @@ use crate::input::Input;
 use crate::ui::effects::FxKey;
 use crate::ui::screens::{Screen, ScreenId};
 use crate::ui::theme::{Theme, ThemeStyles};
+use crate::ui::widgets::select_list::SelectList;
 use ratatui::buffer::Buffer;
 use ratatui::layout::{Constraint, Layout, Rect};
 use ratatui::prelude::{Color, Line, Text, Widget};
-use tachyonfx::{fx, Effect, Interpolation};
+use tachyonfx::{Effect, Interpolation, fx};
 
 #[derive(Clone, Copy)]
 enum MenuItem {
@@ -70,19 +71,8 @@ impl Screen for TitleScreen {
             .collect();
         Text::from(logo_lines).centered().render(logo, buf);
 
-        let menu_lines: Vec<Line> = items
-            .iter()
-            .enumerate()
-            .map(|(i, item)| {
-                let label = item.label();
-                if i == selected {
-                    Line::from(format!("▶ {label} ◀")).style(theme.good())
-                } else {
-                    Line::from(label.to_string()).style(theme.normal())
-                }
-            })
-            .collect();
-        Text::from(menu_lines).centered().render(menu, buf);
+        let labels = items.iter().map(|item| item.label().to_string()).collect();
+        SelectList::new(theme, labels, selected).render(menu, buf);
     }
 
     fn on_input(app: &mut App, input: Input) {
@@ -101,7 +91,7 @@ impl Screen for TitleScreen {
                     if let Some(meta) = app.ui.saved_worlds.first() {
                         let id = meta.id.clone();
                         if app.load_world(&id) {
-                            app.goto(ScreenId::Ship);
+                            app.enter_ship();
                         }
                     }
                 }

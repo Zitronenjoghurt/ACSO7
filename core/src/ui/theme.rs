@@ -40,6 +40,16 @@ pub trait ThemeStyles {
     fn good(&self) -> Style;
     fn danger(&self) -> Style;
     fn error(&self) -> Style;
+
+    fn saturation(&self, ratio: f64) -> Style {
+        if ratio >= 0.66 {
+            self.good()
+        } else if ratio >= 0.33 {
+            self.danger()
+        } else {
+            self.error()
+        }
+    }
 }
 
 impl ThemeStyles for Theme {
