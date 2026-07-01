@@ -57,7 +57,9 @@ impl App {
             .as_secs_f64()
             .clamp(0.0, self.config.max_tick_delta_secs);
         if !self.world.meta.id.is_empty() {
-            self.world.tick(dt);
+            for message in self.world.tick(dt).into_messages() {
+                self.ui.log.push(message);
+            }
         }
         self.last_update += jiff::SignedDuration::from_secs_f64(dt);
     }
@@ -83,8 +85,7 @@ impl App {
     pub fn enter_ship(&mut self) {
         self.ui.ship_focus = ShipFocus::Systems;
         self.ui.system_selected = 0;
-        self.ui.log.push("all systems nominal");
-        self.goto(ScreenId::Reactor);
+        self.goto(ScreenId::Pods);
     }
 
     pub fn autosave(&mut self) -> Acos7Result<()> {
@@ -143,8 +144,8 @@ mod tests {
     use super::*;
     use crate::persistence::NullBackend;
     use crate::world::ship::resources::ShipResource;
-    use ratatui::Terminal;
     use ratatui::backend::TestBackend;
+    use ratatui::Terminal;
 
     #[test]
     fn renders_resource_screen_with_history() {

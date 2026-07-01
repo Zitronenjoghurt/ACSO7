@@ -1,3 +1,4 @@
+use crate::world::ship::alert::Alert;
 use crate::world::ship::resources::flow::FlowSource;
 use crate::world::ship::resources::{ShipResource, ShipResources};
 
@@ -59,6 +60,16 @@ impl Default for Reactor {
 }
 
 impl Reactor {
+    pub fn alerts(&self) -> Vec<Alert> {
+        let mut alerts = Vec::new();
+        if self.health <= 0.0 {
+            alerts.push(Alert::critical("REACTOR OFFLINE"));
+        } else if self.health < 1.0 {
+            alerts.push(Alert::warning("REACTOR DAMAGED"));
+        }
+        alerts
+    }
+
     pub fn tick(&mut self, dt: f64, res: &mut ShipResources) {
         let min_res = res.min_of(self.mode.inputs());
         let rate = self.mode.rate().min(min_res) * self.health * dt;

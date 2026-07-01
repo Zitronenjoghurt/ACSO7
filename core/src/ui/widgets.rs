@@ -1,3 +1,4 @@
+pub mod alerts;
 pub mod chart;
 pub mod chrome;
 pub mod log_view;

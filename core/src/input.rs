@@ -9,4 +9,6 @@ pub enum Input {
     Enter,
     Esc,
     Tab,
+    Home,
+    End,
 }

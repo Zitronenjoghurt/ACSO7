@@ -9,12 +9,15 @@ type Stock = HashMap<ShipResource, f64>;
 
 pub const MIN_RATE: f64 = 0.05;
 
-const TIERS: [(f64, usize, &str); 5] = [
+const TIERS: [(f64, usize, &str); 8] = [
+    (0.1, 100, "10 S"),
     (1.0, 120, "2 MIN"),
     (60.0, 120, "2 HR"),
     (3600.0, 72, "3 DAY"),
     (86400.0, 90, "3 MON"),
     (2_592_000.0, 120, "10 YR"),
+    (25_920_000.0, 120, "100 YR"),
+    (259_200_000.0, 120, "1000 YR"),
 ];
 
 #[derive(Debug, Default, Clone, serde::Serialize, serde::Deserialize)]
@@ -204,16 +207,29 @@ mod tests {
     use crate::world::ship::resources::flow::FlowSource;
 
     #[test]
-    fn finest_tier_commits_one_sample_per_second() {
+    fn finest_tier_commits_ten_samples_per_second() {
+        let mut history = ResourceHistory::default();
+        let mut res = ShipResources::new();
+
+        res.produce(FlowSource::Reactor, &ShipResource::Power, 50.0);
+        history.advance(0.05, &mut res);
+        assert_eq!(history.tier(0).samples.len(), 0);
+
+        history.advance(0.06, &mut res);
+        assert_eq!(history.tier(0).samples.len(), 1);
+    }
+
+    #[test]
+    fn per_second_tier_commits_one_sample_per_second() {
         let mut history = ResourceHistory::default();
         let mut res = ShipResources::new();
 
         res.produce(FlowSource::Reactor, &ShipResource::Power, 50.0);
         history.advance(0.5, &mut res);
-        assert_eq!(history.tier(0).samples.len(), 0);
+        assert_eq!(history.tier(1).samples.len(), 0);
 
         history.advance(0.6, &mut res);
-        assert_eq!(history.tier(0).samples.len(), 1);
+        assert_eq!(history.tier(1).samples.len(), 1);
     }
 
     #[test]
@@ -224,8 +240,8 @@ mod tests {
             res.produce(FlowSource::Reactor, &ShipResource::Power, 10.0);
             history.advance(1.0, &mut res);
         }
-        assert_eq!(history.tier(0).samples.len(), 120);
-        assert_eq!(history.tier(1).samples.len(), 2);
+        assert_eq!(history.tier(1).samples.len(), 120);
+        assert_eq!(history.tier(2).samples.len(), 2);
     }
 
     #[test]
@@ -245,7 +261,7 @@ mod tests {
         res.produce(FlowSource::Reactor, &ShipResource::Power, 100.0);
         history.advance(5.0, &mut res);
 
-        let (produced, _) = history.flow_series(0, ShipResource::Power);
+        let (produced, _) = history.flow_series(1, ShipResource::Power);
         assert_eq!(produced.len(), 5);
         for (_, rate) in &produced {
             assert!((rate - 20.0).abs() < 1e-9, "rate {rate}");
@@ -258,7 +274,7 @@ mod tests {
         let mut res = ShipResources::new();
         res.produce(FlowSource::Reactor, &ShipResource::Heat, 0.01);
         history.advance(1.0, &mut res);
-        assert!(history.sources_of(0, ShipResource::Heat).is_empty());
+        assert!(history.sources_of(1, ShipResource::Heat).is_empty());
     }
 
     #[test]
@@ -271,7 +287,7 @@ mod tests {
         res.consume_available(FlowSource::LifeSupport, &ShipResource::Power, 40.0);
         history.advance(1.0, &mut res);
 
-        let sources = history.sources_of(0, ShipResource::Power);
+        let sources = history.sources_of(1, ShipResource::Power);
         assert_eq!(sources.len(), 2);
         assert_eq!(
             sources

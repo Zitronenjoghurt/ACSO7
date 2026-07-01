@@ -16,7 +16,7 @@ impl Sex {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct Colonist {
     pub sex: Sex,
     pub age: u8,

@@ -3,6 +3,7 @@ use crate::input::Input;
 use crate::ui::ShipFocus;
 use crate::ui::screens::{Screen, ScreenId};
 use crate::ui::theme::ThemeStyles;
+use crate::ui::widgets::alerts::Alerts;
 use crate::ui::widgets::readout::Readout;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
@@ -15,11 +16,21 @@ impl Screen for PodsScreen {
         let theme = &app.config.theme;
         let pods = &app.world.ship.pods;
 
-        Readout::new("LIFE PODS", theme)
+        let mut readout = Readout::new("LIFE PODS", theme)
             .focused(app.ui.ship_focus == ShipFocus::Content)
             .stat("POPULATION", pods.pods.len().to_string())
             .bar("INTEGRITY", pods.avg_health())
-            .bar("POWER", pods.power_saturation)
+            .bar("POWER", pods.power_saturation);
+
+        let alerts = pods.alerts();
+        if !alerts.is_empty() {
+            readout = readout.blank();
+            for line in Alerts::new(&alerts, theme).lines() {
+                readout = readout.line(line.centered());
+            }
+        }
+
+        readout
             .blank()
             .line(
                 Line::from(format!("[ ⏎  VIEW {} COLONISTS  → ]", pods.pods.len()))

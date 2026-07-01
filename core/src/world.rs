@@ -1,6 +1,8 @@
 pub mod colonist;
+mod events;
 pub mod ship;
 
+use crate::world::events::WorldEvents;
 use jiff::{Timestamp, Zoned};
 
 pub type WorldId = String;
@@ -45,8 +47,36 @@ impl World {
 
 // Tick
 impl World {
-    pub fn tick(&mut self, dt: f64) {
+    pub fn tick(&mut self, dt: f64) -> WorldEvents {
+        let mut events = WorldEvents::default();
         self.mission_secs += dt;
-        self.ship.tick(dt);
+        self.ship.tick(dt, &mut events);
+        events
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn starved_pods_raise_alerts_and_emit_events() {
+        let mut world = World::new("test");
+        world.ship.pods.pods.truncate(1);
+        world.ship.pods.pods[0].health = 0.005;
+
+        let first = world.tick(1.0);
+        assert!(world.ship.pods.life_support_failing());
+        assert!(!world.ship.pods.alerts().is_empty());
+        drop(first);
+
+        let mut messages: Vec<String> = Vec::new();
+        for _ in 0..1000 {
+            messages.extend(world.tick(1.0).into_messages());
+            if !messages.is_empty() {
+                break;
+            }
+        }
+        assert!(messages.iter().any(|m| m.contains("POD LOST")));
     }
 }

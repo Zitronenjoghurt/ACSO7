@@ -1,7 +1,9 @@
 use crate::app::App;
 use crate::ui::screens::{SHIP_SYSTEMS, ScreenId, ShipFocus};
 use crate::ui::theme::{Theme, ThemeStyles};
+use crate::ui::widgets::alerts::Alerts;
 use crate::ui::widgets::panel::Panel;
+use crate::world::ship::alert::AlertLevel;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::prelude::{Line, Text, Widget};
@@ -31,14 +33,22 @@ impl Widget for Sidebar<'_> {
             .padding(Padding::new(1, 1, 1, 0))
             .render(area, buf);
 
-        let lines: Vec<Line> = SHIP_SYSTEMS
-            .iter()
-            .enumerate()
-            .map(|(i, sys)| {
-                let (ratio, value) = sys.vital(self.app);
-                system_row(*sys, ratio, &value, i == selected && show, focus, theme)
-            })
-            .collect();
+        let mut lines: Vec<Line> = Vec::new();
+        for (i, sys) in SHIP_SYSTEMS.iter().enumerate() {
+            let (ratio, value) = sys.vital(self.app);
+            let alerts = sys.alerts(self.app);
+            let widget = Alerts::new(&alerts, theme).indent(5);
+            lines.push(system_row(
+                *sys,
+                ratio,
+                &value,
+                i == selected && show,
+                focus,
+                widget.top_level(),
+                theme,
+            ));
+            lines.extend(widget.lines());
+        }
         Text::from(lines).render(inner, buf);
     }
 }
@@ -49,6 +59,7 @@ fn system_row<'a>(
     value: &str,
     active: bool,
     focus: ShipFocus,
+    alert: Option<AlertLevel>,
     theme: &Theme,
 ) -> Line<'a> {
     let r = ratio.clamp(0.0, 1.0);
@@ -60,10 +71,11 @@ fn system_row<'a>(
     } else {
         ("▶", theme.normal().add_modifier(Modifier::DIM))
     };
-    let label_style = if focused {
-        theme.good()
-    } else {
-        theme.normal()
+    let label_style = match alert {
+        Some(AlertLevel::Critical) => theme.error().add_modifier(Modifier::BOLD),
+        Some(AlertLevel::Warning) => theme.danger().add_modifier(Modifier::BOLD),
+        None if focused => theme.good(),
+        None => theme.normal(),
     };
     Line::from(vec![
         Span::styled(format!("[{}] ", sys.hotkey()), theme.danger()),

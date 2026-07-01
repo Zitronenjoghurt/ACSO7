@@ -1,7 +1,11 @@
+use crate::world::events::WorldEvents;
+use crate::world::ship::alert::Alert;
+use crate::world::ship::pods::Pods;
 use crate::world::ship::resources::ShipResource;
 use crate::world::ship::resources::flow::FlowSource;
 use crate::world::ship::resources::history::ResourceHistory;
 
+pub mod alert;
 pub mod pods;
 mod reactor;
 pub mod resources;
@@ -27,10 +31,18 @@ impl Default for Ship {
 }
 
 impl Ship {
-    pub fn tick(&mut self, dt: f64) {
+    pub fn grid_alerts(&self) -> Vec<Alert> {
+        if self.pods.power_saturation < Pods::MIN_SAFE_SATURATION {
+            vec![Alert::warning("GRID UNDERPOWERED")]
+        } else {
+            Vec::new()
+        }
+    }
+
+    pub fn tick(&mut self, dt: f64, events: &mut WorldEvents) {
         self.reactor.tick(dt, &mut self.res);
         self.supply_power(dt);
-        self.pods.tick(dt);
+        self.pods.tick(dt, events);
         self.history.advance(dt, &mut self.res);
     }
 

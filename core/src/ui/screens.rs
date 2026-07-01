@@ -2,6 +2,7 @@ use crate::app::App;
 use crate::input::Input;
 use crate::ui::widgets::chrome::Chrome;
 use crate::ui::widgets::shell::Shell;
+use crate::world::ship::alert::Alert;
 use crate::world::ship::resources::ShipResource;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
@@ -30,7 +31,7 @@ pub enum ScreenId {
     Load,
     Reactor,
     Pods,
-    PowerRouter,
+    PowerGrid,
     Colonists,
     Resource,
 }
@@ -43,20 +44,20 @@ pub enum ShipFocus {
     Resources,
 }
 
-pub const SHIP_SYSTEMS: [ScreenId; 3] = [ScreenId::Reactor, ScreenId::Pods, ScreenId::PowerRouter];
+pub const SHIP_SYSTEMS: [ScreenId; 3] = [ScreenId::Reactor, ScreenId::Pods, ScreenId::PowerGrid];
 
 impl ScreenId {
     fn in_shell(self) -> bool {
         matches!(
             self,
-            Self::Reactor | Self::Pods | Self::PowerRouter | Self::Colonists | Self::Resource
+            Self::Reactor | Self::Pods | Self::PowerGrid | Self::Colonists | Self::Resource
         )
     }
 
     pub fn shows_system(self) -> bool {
         matches!(
             self,
-            Self::Reactor | Self::Pods | Self::PowerRouter | Self::Colonists
+            Self::Reactor | Self::Pods | Self::PowerGrid | Self::Colonists
         )
     }
 
@@ -64,7 +65,7 @@ impl ScreenId {
         match self {
             Self::Reactor => 'R',
             Self::Pods => 'P',
-            Self::PowerRouter => 'G',
+            Self::PowerGrid => 'G',
             _ => ' ',
         }
     }
@@ -73,7 +74,7 @@ impl ScreenId {
         match c.to_ascii_uppercase() {
             'R' => Some(Self::Reactor),
             'P' => Some(Self::Pods),
-            'G' => Some(Self::PowerRouter),
+            'G' => Some(Self::PowerGrid),
             _ => None,
         }
     }
@@ -93,7 +94,9 @@ impl ScreenId {
 
     fn main_footer(self) -> &'static str {
         match self {
-            Self::Colonists => "[ ↑↓ SCROLL │ , . PAGE │ ←→ PANEL │ ESC BACK │ Q QUIT ]",
+            Self::Colonists => {
+                "[ ↑↓ SCROLL │ , . PAGE │ HOME/END JUMP │ ←→ PANEL │ ESC BACK │ Q QUIT ]"
+            }
             Self::Resource => "[ ↑↓ RESOURCE │ - + RANGE │ ←→ PANEL │ ESC BACK │ Q QUIT ]",
             _ => "[ ←→ PANEL │ ⇥ CYCLE │ ESC BACK │ Q QUIT ]",
         }
@@ -103,8 +106,18 @@ impl ScreenId {
         match self {
             Self::Reactor => "REACTOR",
             Self::Pods => "LIFE PODS",
-            Self::PowerRouter => "POWER GRID",
+            Self::PowerGrid => "POWER GRID",
             _ => "",
+        }
+    }
+
+    pub fn alerts(self, app: &App) -> Vec<Alert> {
+        let ship = &app.world.ship;
+        match self {
+            Self::Reactor => ship.reactor.alerts(),
+            Self::Pods | Self::Colonists => ship.pods.alerts(),
+            Self::PowerGrid => ship.grid_alerts(),
+            _ => Vec::new(),
         }
     }
 
@@ -113,7 +126,7 @@ impl ScreenId {
         match self {
             Self::Reactor => (ship.reactor.health, format!("{:?}", ship.reactor.mode)),
             Self::Pods => (ship.pods.avg_health(), ship.pods.pods.len().to_string()),
-            Self::PowerRouter => (
+            Self::PowerGrid => (
                 ship.pods.power_saturation,
                 format!("{:.0} MW", ship.res.get(&ShipResource::Power)),
             ),
@@ -160,7 +173,7 @@ impl ScreenId {
             Self::Load => load::LoadScreen::on_enter(app),
             Self::Reactor => reactor::ReactorScreen::on_enter(app),
             Self::Pods => pods::PodsScreen::on_enter(app),
-            Self::PowerRouter => power_router::PowerRouterScreen::on_enter(app),
+            Self::PowerGrid => power_router::PowerRouterScreen::on_enter(app),
             Self::Colonists => colonists::ColonistsScreen::on_enter(app),
             Self::Resource => resource::ResourceScreen::on_enter(app),
         }
@@ -173,7 +186,7 @@ fn render_shell(screen: ScreenId, app: &App, area: Rect, buf: &mut Buffer) {
     match screen {
         ScreenId::Reactor => reactor::ReactorScreen::render(app, main, buf),
         ScreenId::Pods => pods::PodsScreen::render(app, main, buf),
-        ScreenId::PowerRouter => power_router::PowerRouterScreen::render(app, main, buf),
+        ScreenId::PowerGrid => power_router::PowerRouterScreen::render(app, main, buf),
         ScreenId::Colonists => colonists::ColonistsScreen::render(app, main, buf),
         ScreenId::Resource => resource::ResourceScreen::render(app, main, buf),
         _ => {}
@@ -265,7 +278,7 @@ fn content_input(screen: ScreenId, app: &mut App, input: Input) {
         _ => match screen {
             ScreenId::Reactor => reactor::ReactorScreen::on_input(app, input),
             ScreenId::Pods => pods::PodsScreen::on_input(app, input),
-            ScreenId::PowerRouter => power_router::PowerRouterScreen::on_input(app, input),
+            ScreenId::PowerGrid => power_router::PowerRouterScreen::on_input(app, input),
             ScreenId::Colonists => colonists::ColonistsScreen::on_input(app, input),
             ScreenId::Resource => resource::ResourceScreen::on_input(app, input),
             _ => {}
