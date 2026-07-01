@@ -1,3 +1,4 @@
+use crate::world::ship::resources::flow::FlowSource;
 use crate::world::ship::resources::{ShipResource, ShipResources};
 
 #[derive(
@@ -66,18 +67,18 @@ impl Reactor {
         }
 
         for input in self.mode.inputs() {
-            res.remove(input, rate);
+            res.consume(FlowSource::Reactor, input, rate);
         }
 
         for output in self.mode.outputs() {
-            res.add(output, rate);
+            res.produce(FlowSource::Reactor, output, rate);
         }
 
         let base_yield = self.mode.energy_yield() * rate;
         let energy_yield = base_yield * self.mode.efficiency();
-        res.add(&ShipResource::Power, energy_yield);
+        res.produce(FlowSource::Reactor, &ShipResource::Power, energy_yield);
 
         let heat_yield = base_yield * (1.0 - self.mode.efficiency());
-        res.add(&ShipResource::Heat, heat_yield);
+        res.produce(FlowSource::Reactor, &ShipResource::Heat, heat_yield);
     }
 }

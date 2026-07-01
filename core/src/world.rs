@@ -29,6 +29,8 @@ impl WorldMeta {
 pub struct World {
     pub meta: WorldMeta,
     pub ship: ship::Ship,
+    #[serde(default)]
+    pub mission_secs: f64,
 }
 
 impl World {
@@ -36,6 +38,7 @@ impl World {
         Self {
             meta: WorldMeta::new(name),
             ship: ship::Ship::default(),
+            mission_secs: 0.0,
         }
     }
 }
@@ -43,6 +46,7 @@ impl World {
 // Tick
 impl World {
     pub fn tick(&mut self, dt: f64) {
+        self.mission_secs += dt;
         self.ship.tick(dt);
     }
 }

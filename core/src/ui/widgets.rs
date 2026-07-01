@@ -1,3 +1,4 @@
+pub mod chart;
 pub mod chrome;
 pub mod log_view;
 pub mod padded_line;
@@ -7,4 +8,5 @@ pub mod resources;
 pub mod select_list;
 pub mod shell;
 pub mod sidebar;
+pub mod source_breakdown;
 pub mod status_bar;

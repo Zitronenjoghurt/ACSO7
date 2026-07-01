@@ -11,6 +11,9 @@ pub struct Panel<'a> {
     title_alignment: Alignment,
     padding: Padding,
     fixed: Option<(u16, u16)>,
+    left: Option<Line<'a>>,
+    right: Option<Line<'a>>,
+    bottom: Option<Line<'a>>,
 }
 
 impl<'a> Panel<'a> {
@@ -22,7 +25,25 @@ impl<'a> Panel<'a> {
             title_alignment: Alignment::Center,
             padding: Padding::symmetric(2, 1),
             fixed: None,
+            left: None,
+            right: None,
+            bottom: None,
         }
+    }
+
+    pub fn left(mut self, left: Line<'a>) -> Self {
+        self.left = Some(left);
+        self
+    }
+
+    pub fn bottom(mut self, bottom: Line<'a>) -> Self {
+        self.bottom = Some(bottom);
+        self
+    }
+
+    pub fn right(mut self, right: Line<'a>) -> Self {
+        self.right = Some(right);
+        self
     }
 
     pub fn focused(mut self, focused: bool) -> Self {
@@ -55,7 +76,7 @@ impl<'a> Panel<'a> {
         } else {
             BorderType::Rounded
         };
-        let block = Block::bordered()
+        let mut block = Block::bordered()
             .border_type(border)
             .border_style(self.theme.normal())
             .title(
@@ -64,6 +85,15 @@ impl<'a> Panel<'a> {
                     .style(self.theme.good()),
             )
             .padding(self.padding);
+        if let Some(left) = self.left {
+            block = block.title(left.left_aligned());
+        }
+        if let Some(right) = self.right {
+            block = block.title(right.right_aligned());
+        }
+        if let Some(bottom) = self.bottom {
+            block = block.title_bottom(bottom.centered());
+        }
         let inner = block.inner(area);
         block.render(area, buf);
         inner

@@ -1,6 +1,6 @@
 use crate::app::App;
 use crate::input::Input;
-use crate::ui::screens::{Screen, ScreenId};
+use crate::ui::screens::Screen;
 use crate::ui::theme::ThemeStyles;
 use crate::ui::widgets::panel::Panel;
 use crate::world::colonist::Sex;
@@ -61,24 +61,20 @@ impl Screen for ColonistsScreen {
     fn on_input(app: &mut App, input: Input) {
         let total = app.world.ship.pods.pods.len();
         if total == 0 {
-            if let Input::Esc = input {
-                app.goto(ScreenId::Pods);
-            }
             return;
         }
         let last = total - 1;
         match input {
-            Input::Esc => app.goto(ScreenId::Pods),
             Input::ArrowUp => {
                 app.ui.colonist_selected = app.ui.colonist_selected.checked_sub(1).unwrap_or(last);
             }
             Input::ArrowDown => {
                 app.ui.colonist_selected = (app.ui.colonist_selected + 1) % total;
             }
-            Input::ArrowLeft => {
+            Input::Char(',') => {
                 app.ui.colonist_selected = app.ui.colonist_selected.saturating_sub(PAGE);
             }
-            Input::ArrowRight => {
+            Input::Char('.') => {
                 app.ui.colonist_selected = (app.ui.colonist_selected + PAGE).min(last);
             }
             _ => {}

@@ -39,6 +39,7 @@ fn map_input(code: KeyCode) -> Option<Input> {
         KeyCode::Backspace => Input::Backspace,
         KeyCode::Enter => Input::Enter,
         KeyCode::Esc => Input::Esc,
+        KeyCode::Tab => Input::Tab,
         _ => return None,
     })
 }

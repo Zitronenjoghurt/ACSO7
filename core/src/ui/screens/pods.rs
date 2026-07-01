@@ -16,7 +16,7 @@ impl Screen for PodsScreen {
         let pods = &app.world.ship.pods;
 
         Readout::new("LIFE PODS", theme)
-            .focused(app.ui.ship_focus == ShipFocus::Main)
+            .focused(app.ui.ship_focus == ShipFocus::Content)
             .stat("POPULATION", pods.pods.len().to_string())
             .bar("INTEGRITY", pods.avg_health())
             .bar("POWER", pods.power_saturation)
@@ -30,10 +30,8 @@ impl Screen for PodsScreen {
     }
 
     fn on_input(app: &mut App, input: Input) {
-        match input {
-            Input::Enter => app.goto(ScreenId::Colonists),
-            Input::Esc | Input::ArrowLeft => app.ui.ship_focus = ShipFocus::Sidebar,
-            _ => {}
+        if let Input::Enter = input {
+            app.goto(ScreenId::Colonists);
         }
     }
 }

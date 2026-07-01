@@ -11,12 +11,11 @@ use ratatui::widgets::Padding;
 
 pub struct Sidebar<'a> {
     app: &'a App,
-    active: ScreenId,
 }
 
 impl<'a> Sidebar<'a> {
-    pub fn new(app: &'a App, active: ScreenId) -> Self {
-        Self { app, active }
+    pub fn new(app: &'a App) -> Self {
+        Self { app }
     }
 }
 
@@ -24,17 +23,20 @@ impl Widget for Sidebar<'_> {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let theme = &self.app.config.theme;
         let focus = self.app.ui.ship_focus;
+        let selected = self.app.ui.system_selected.min(SHIP_SYSTEMS.len() - 1);
+        let show = self.app.ui.current_screen.shows_system();
 
         let inner = Panel::new(&self.app.world.meta.name, theme)
-            .focused(focus == ShipFocus::Sidebar)
+            .focused(focus == ShipFocus::Systems)
             .padding(Padding::new(1, 1, 1, 0))
             .render(area, buf);
 
         let lines: Vec<Line> = SHIP_SYSTEMS
             .iter()
-            .map(|sys| {
+            .enumerate()
+            .map(|(i, sys)| {
                 let (ratio, value) = sys.vital(self.app);
-                system_row(*sys, ratio, &value, *sys == self.active, focus, theme)
+                system_row(*sys, ratio, &value, i == selected && show, focus, theme)
             })
             .collect();
         Text::from(lines).render(inner, buf);
@@ -45,18 +47,20 @@ fn system_row<'a>(
     sys: ScreenId,
     ratio: f64,
     value: &str,
-    selected: bool,
+    active: bool,
     focus: ShipFocus,
     theme: &Theme,
 ) -> Line<'a> {
     let r = ratio.clamp(0.0, 1.0);
-    let active_here = selected && focus == ShipFocus::Sidebar;
-    let (marker, marker_style) = match (selected, focus) {
-        (true, ShipFocus::Sidebar) => ("▶", theme.good()),
-        (true, ShipFocus::Main) => ("▶", theme.normal().add_modifier(Modifier::DIM)),
-        _ => (" ", theme.normal()),
+    let focused = active && focus == ShipFocus::Systems;
+    let (marker, marker_style) = if !active {
+        (" ", theme.normal())
+    } else if focused {
+        ("▶", theme.good())
+    } else {
+        ("▶", theme.normal().add_modifier(Modifier::DIM))
     };
-    let label_style = if active_here {
+    let label_style = if focused {
         theme.good()
     } else {
         theme.normal()

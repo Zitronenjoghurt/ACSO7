@@ -81,7 +81,8 @@ impl App {
     }
 
     pub fn enter_ship(&mut self) {
-        self.ui.ship_focus = ShipFocus::Sidebar;
+        self.ui.ship_focus = ShipFocus::Systems;
+        self.ui.system_selected = 0;
         self.ui.log.push("all systems nominal");
         self.goto(ScreenId::Reactor);
     }
@@ -134,5 +135,36 @@ impl App {
 impl Drop for App {
     fn drop(&mut self) {
         self.save().unwrap();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::persistence::NullBackend;
+    use crate::world::ship::resources::ShipResource;
+    use ratatui::Terminal;
+    use ratatui::backend::TestBackend;
+
+    #[test]
+    fn renders_resource_screen_with_history() {
+        let mut app = App::new(Box::new(NullBackend)).unwrap();
+        app.create_world("test");
+        app.world.ship.res.set(ShipResource::Deuterium, 10000.0);
+        app.world.ship.res.set(ShipResource::Helium3, 10000.0);
+        for _ in 0..5 {
+            app.world.tick(1.0);
+        }
+
+        app.enter_ship();
+        app.ui.ship_focus = ShipFocus::Resources;
+        app.on_input(Input::ArrowDown);
+        assert_eq!(app.ui.current_screen, ScreenId::Resource);
+        app.on_input(Input::Enter);
+        assert_eq!(app.ui.ship_focus, ShipFocus::Content);
+
+        let mut terminal = Terminal::new(TestBackend::new(120, 40)).unwrap();
+        let screen = app.ui.current_screen;
+        terminal.draw(|frame| screen.render(&app, frame)).unwrap();
     }
 }

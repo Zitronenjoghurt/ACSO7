@@ -8,4 +8,5 @@ pub enum Input {
     Backspace,
     Enter,
     Esc,
+    Tab,
 }

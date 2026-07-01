@@ -1,5 +1,5 @@
 use crate::app::App;
-use crate::ui::screens::ScreenId;
+use crate::ui::screens::{ScreenId, ShipFocus};
 use crate::ui::widgets::log_view::LogView;
 use crate::ui::widgets::resources::Resources;
 use crate::ui::widgets::sidebar::Sidebar;
@@ -15,12 +15,11 @@ const LOG_HEIGHT: u16 = 5;
 
 pub struct Shell<'a> {
     app: &'a App,
-    active: ScreenId,
 }
 
 impl<'a> Shell<'a> {
-    pub fn new(app: &'a App, active: ScreenId) -> Self {
-        Self { app, active }
+    pub fn new(app: &'a App) -> Self {
+        Self { app }
     }
 
     pub fn render(self, area: Rect, buf: &mut Buffer) -> Rect {
@@ -38,9 +37,17 @@ impl<'a> Shell<'a> {
         ])
         .areas(center);
 
-        Sidebar::new(self.app, self.active).render(sidebar, buf);
-        Resources::new(&self.app.world.ship.res, theme).render(resources, buf);
-        StatusBar::new(theme).render(status, buf);
+        Sidebar::new(self.app).render(sidebar, buf);
+        Resources::new(
+            &self.app.world.ship.res,
+            &self.app.world.ship.history,
+            theme,
+        )
+        .focused(self.app.ui.ship_focus == ShipFocus::Resources)
+        .showing(self.app.ui.current_screen == ScreenId::Resource)
+        .selected(self.app.ui.resource_selected)
+        .render(resources, buf);
+        StatusBar::new(theme, self.app.world.mission_secs).render(status, buf);
         LogView::new(&self.app.ui.log, theme).render(log, buf);
 
         main

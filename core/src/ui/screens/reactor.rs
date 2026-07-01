@@ -15,7 +15,7 @@ impl Screen for ReactorScreen {
         let ship = &app.world.ship;
 
         Readout::new("REACTOR", &app.config.theme)
-            .focused(app.ui.ship_focus == ShipFocus::Main)
+            .focused(app.ui.ship_focus == ShipFocus::Content)
             .stat("MODE", format!("{:?}", ship.reactor.mode))
             .bar("HEALTH", ship.reactor.health)
             .stat(
@@ -26,9 +26,5 @@ impl Screen for ReactorScreen {
             .render(area, buf);
     }
 
-    fn on_input(app: &mut App, input: Input) {
-        if let Input::Esc | Input::ArrowLeft = input {
-            app.ui.ship_focus = ShipFocus::Sidebar;
-        }
-    }
+    fn on_input(_app: &mut App, _input: Input) {}
 }
