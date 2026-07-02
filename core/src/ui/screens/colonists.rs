@@ -108,10 +108,10 @@ impl Screen for ColonistsScreen {
             Input::ArrowDown => {
                 app.ui.colonist_selected = (app.ui.colonist_selected + 1) % total;
             }
-            Input::Char(',') => {
+            Input::ArrowLeft => {
                 app.ui.colonist_selected = app.ui.colonist_selected.saturating_sub(PAGE);
             }
-            Input::Char('.') => {
+            Input::ArrowRight => {
                 app.ui.colonist_selected = (app.ui.colonist_selected + PAGE).min(last);
             }
             Input::Home => {

@@ -1,9 +1,9 @@
 use crate::app::App;
 use crate::input::Input;
-use crate::ui::PopupState;
 use crate::ui::widgets::chrome::Chrome;
 use crate::ui::widgets::popup::Popup;
 use crate::ui::widgets::shell::Shell;
+use crate::ui::PopupState;
 use crate::world::ship::alert::Alert;
 use crate::world::ship::resources::ShipResource;
 use ratatui::buffer::Buffer;
@@ -92,6 +92,7 @@ impl ScreenId {
             Self::NewWorld => "[ TYPE NAME │ ⏎ CREATE │ ESC BACK ]",
             Self::Load => "[ ↑↓ SELECT │ ⏎ LOAD │ ESC BACK ]",
             Self::Debug => "[ ␣ PAUSE │ ESC CLOSE │ Q QUIT ]",
+            Self::Colonists => "[ ↑↓ SCROLL │ ←→ PAGE │ ␣ PAUSE │ ? HELP │ ESC BACK │ Q QUIT ]",
             _ => match app.ui.ship_focus {
                 ShipFocus::Systems => {
                     "[ ↑↓ SYSTEM │ →/⇥ RESOURCES │ ␣ PAUSE │ D DEBUG │ ? HELP │ ESC EXIT │ Q QUIT ]"
@@ -99,9 +100,7 @@ impl ScreenId {
                 ShipFocus::Resources => {
                     "[ ↑↓ RESOURCE │ - + RANGE │ ␣ PAUSE │ D DEBUG │ ? HELP │ ESC EXIT │ Q ]"
                 }
-                ShipFocus::Content => {
-                    "[ ↑↓ SCROLL │ , . PAGE │ ␣ PAUSE │ ? HELP │ ESC BACK │ Q QUIT ]"
-                }
+                ShipFocus::Content => "[ ↑↓ SCROLL │ ␣ PAUSE │ ? HELP │ ESC BACK │ Q QUIT ]",
             },
         }
     }

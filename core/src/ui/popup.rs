@@ -56,8 +56,8 @@ impl PopupState {
         match input {
             Input::ArrowUp => self.scroll = self.scroll.saturating_sub(1),
             Input::ArrowDown => self.scroll = (self.scroll + 1).min(self.max_scroll()),
-            Input::Char(',') => self.scroll = self.scroll.saturating_sub(PAGE),
-            Input::Char('.') => self.scroll = (self.scroll + PAGE).min(self.max_scroll()),
+            Input::ArrowLeft => self.scroll = self.scroll.saturating_sub(PAGE),
+            Input::ArrowRight => self.scroll = (self.scroll + PAGE).min(self.max_scroll()),
             Input::Home => self.scroll = 0,
             Input::End => self.scroll = self.max_scroll(),
             _ => return false,

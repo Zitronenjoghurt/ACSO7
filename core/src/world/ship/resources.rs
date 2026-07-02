@@ -1,6 +1,6 @@
 use crate::world::ship::resources::flow::{FlowMeter, FlowSource};
 use std::collections::HashMap;
-use strum::EnumIter;
+use strum::{EnumIter, IntoEnumIterator};
 
 pub mod flow;
 pub mod history;
@@ -49,6 +49,25 @@ impl ShipResource {
         }
     }
 
+    pub fn base_capacity(&self) -> Option<f64> {
+        match self {
+            ShipResource::Power | ShipResource::Heat | ShipResource::Neutrons => None,
+            ShipResource::Protium
+            | ShipResource::Deuterium
+            | ShipResource::Tritium
+            | ShipResource::Helium3
+            | ShipResource::Helium4
+            | ShipResource::Lithium
+            | ShipResource::Hydrogen => Some(50_000.0),
+            ShipResource::Oxygen
+            | ShipResource::Carbon
+            | ShipResource::Nitrogen
+            | ShipResource::CarbonDioxide
+            | ShipResource::Methane => Some(20_000.0),
+            ShipResource::Water => Some(100_000.0),
+        }
+    }
+
     pub fn name(&self) -> &'static str {
         match self {
             ShipResource::Power => "POWER",
@@ -71,16 +90,42 @@ impl ShipResource {
     }
 }
 
-#[derive(Debug, Default, serde::Serialize, serde::Deserialize)]
+fn default_capacities() -> HashMap<ShipResource, f64> {
+    ShipResource::iter()
+        .filter_map(|resource| resource.base_capacity().map(|cap| (resource, cap)))
+        .collect()
+}
+
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct ShipResources {
     amounts: HashMap<ShipResource, f64>,
+    #[serde(default = "default_capacities")]
+    capacities: HashMap<ShipResource, f64>,
     #[serde(skip)]
     meter: FlowMeter,
+}
+
+impl Default for ShipResources {
+    fn default() -> Self {
+        Self {
+            amounts: HashMap::new(),
+            capacities: default_capacities(),
+            meter: FlowMeter::default(),
+        }
+    }
 }
 
 impl ShipResources {
     pub fn new() -> Self {
         Self::default()
+    }
+
+    pub fn capacity(&self, resource: &ShipResource) -> Option<f64> {
+        self.capacities.get(resource).copied()
+    }
+
+    pub fn set_capacity(&mut self, resource: ShipResource, capacity: f64) {
+        self.capacities.insert(resource, capacity);
     }
 
     pub fn get(&self, resource: &ShipResource) -> f64 {
@@ -144,7 +189,17 @@ impl ShipResources {
     }
 
     fn add(&mut self, resource: &ShipResource, amount: f64) {
-        self.amounts.insert(*resource, self.get(resource) + amount);
+        let new_amount = self.get(resource) + amount;
+        match self.capacity(resource) {
+            Some(cap) if new_amount > cap => {
+                self.amounts.insert(*resource, cap);
+                self.meter
+                    .record_consumed(FlowSource::Vented, *resource, new_amount - cap);
+            }
+            _ => {
+                self.amounts.insert(*resource, new_amount);
+            }
+        }
     }
 
     fn remove(&mut self, resource: &ShipResource, amount: f64) -> bool {

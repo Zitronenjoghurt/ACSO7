@@ -150,6 +150,23 @@ impl Reactor {
         alerts
     }
 
+    pub fn fuel_seconds_remaining(&self, res: &ShipResources) -> Option<f64> {
+        let inputs = self.mode.inputs();
+        let max_rate = inputs
+            .iter()
+            .map(|(resource, factor)| res.get(resource) / factor)
+            .fold(f64::INFINITY, f64::min);
+        let base_rate = self.fusion_rate.min(max_rate) * self.health;
+        if base_rate <= 0.0 {
+            return None;
+        }
+        let seconds = inputs
+            .iter()
+            .map(|(resource, factor)| res.get(resource) / (base_rate * factor))
+            .fold(f64::INFINITY, f64::min);
+        Some(seconds)
+    }
+
     pub fn tick(&mut self, dt: f64, res: &mut ShipResources) {
         let max_rate = self
             .mode

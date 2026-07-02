@@ -1,10 +1,10 @@
 use crate::app::App;
 use crate::input::Input;
-use crate::ui::PopupState;
-use crate::ui::ShipFocus;
 use crate::ui::screens::Screen;
 use crate::ui::theme::ThemeStyles;
 use crate::ui::widgets::readout::Readout;
+use crate::ui::PopupState;
+use crate::ui::ShipFocus;
 use crate::world::ship::reactor::ReactorMode;
 use crate::world::ship::resources::ShipResource;
 use ratatui::buffer::Buffer;
@@ -35,9 +35,15 @@ impl Screen for ReactorScreen {
             )));
         }
 
+        let fuel_for = match ship.reactor.fuel_seconds_remaining(&ship.res) {
+            Some(secs) => fuel_label(secs),
+            None => "—".to_string(),
+        };
+
         readout
             .blank()
             .bar("HEALTH", ship.reactor.health)
+            .stat("FUEL FOR", fuel_for)
             .stat(
                 "POWER",
                 format!("{:.0} MW", ship.res.get(&ShipResource::Power)),
@@ -73,5 +79,18 @@ impl Screen for ReactorScreen {
             popup = popup.blank();
         }
         Some(popup)
+    }
+}
+
+fn fuel_label(secs: f64) -> String {
+    let s = secs.max(0.0) as u64;
+    if s < 90 {
+        format!("{s}s")
+    } else if s < 5400 {
+        format!("{}m", s / 60)
+    } else if s < 172_800 {
+        format!("{}h", s / 3600)
+    } else {
+        format!("{}d", s / 86400)
     }
 }

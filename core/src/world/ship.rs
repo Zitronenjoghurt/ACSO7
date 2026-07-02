@@ -7,6 +7,7 @@ pub mod alert;
 pub mod pods;
 pub mod reactor;
 pub mod resources;
+mod starscooper;
 
 const TRITIUM_HALF_LIFE_SECS: f64 = 388_158_480.0;
 
@@ -14,6 +15,7 @@ const TRITIUM_HALF_LIFE_SECS: f64 = 388_158_480.0;
 pub struct Ship {
     pub res: resources::ShipResources,
     pub reactor: reactor::Reactor,
+    pub scooper: starscooper::Starscooper,
     pub pods: pods::Pods,
     #[serde(default)]
     pub history: ResourceHistory,
@@ -24,6 +26,7 @@ impl Default for Ship {
         Self {
             res: resources::ShipResources::default(),
             reactor: reactor::Reactor::default(),
+            scooper: starscooper::Starscooper::default(),
             pods: pods::Pods::generate(1000, &mut fastrand::Rng::new()),
             history: ResourceHistory::default(),
         }

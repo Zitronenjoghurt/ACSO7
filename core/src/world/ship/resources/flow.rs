@@ -9,6 +9,7 @@ pub enum FlowSource {
     Reactor,
     LifeSupport,
     TritiumDecay,
+    Vented,
 }
 
 impl FlowSource {
@@ -17,6 +18,7 @@ impl FlowSource {
             FlowSource::Reactor => "REACTOR",
             FlowSource::LifeSupport => "LIFE SUPPORT",
             FlowSource::TritiumDecay => "TRITIUM DECAY",
+            FlowSource::Vented => "VENTED",
         }
     }
 }
