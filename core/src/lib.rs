@@ -3,6 +3,8 @@ mod config;
 pub mod data;
 mod error;
 pub mod input;
+mod math;
+mod performance;
 pub mod persistence;
 pub mod ui;
 pub mod world;

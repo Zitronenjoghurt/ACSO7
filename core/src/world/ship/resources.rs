@@ -11,6 +11,7 @@ pub mod history;
 pub enum ShipResource {
     Power,
     Heat,
+    Neutrons,
     Protium,
     Deuterium,
     Tritium,
@@ -31,6 +32,7 @@ impl ShipResource {
         match self {
             ShipResource::Power => "PWR",
             ShipResource::Heat => "HEAT",
+            ShipResource::Neutrons => "NEUT",
             ShipResource::Protium => "PROT",
             ShipResource::Deuterium => "DEUT",
             ShipResource::Tritium => "TRIT",
@@ -51,6 +53,7 @@ impl ShipResource {
         match self {
             ShipResource::Power => "POWER",
             ShipResource::Heat => "HEAT",
+            ShipResource::Neutrons => "NEUTRONS",
             ShipResource::Protium => "PROTIUM",
             ShipResource::Deuterium => "DEUTERIUM",
             ShipResource::Tritium => "TRITIUM",
@@ -116,18 +119,18 @@ impl ShipResources {
         removed
     }
 
-    pub fn min_of(&self, resources: &[ShipResource]) -> f64 {
+    pub fn min_of(&self, resources: impl IntoIterator<Item = ShipResource>) -> f64 {
         resources
-            .iter()
-            .map(|r| self.get(r))
+            .into_iter()
+            .map(|r| self.get(&r))
             .min_by(|a, b| a.total_cmp(b))
             .unwrap_or(0.0)
     }
 
-    pub fn max_of(&self, resources: &[ShipResource]) -> f64 {
+    pub fn max_of(&self, resources: impl IntoIterator<Item = ShipResource>) -> f64 {
         resources
-            .iter()
-            .map(|r| self.get(r))
+            .into_iter()
+            .map(|r| self.get(&r))
             .max_by(|a, b| a.total_cmp(b))
             .unwrap_or(0.0)
     }

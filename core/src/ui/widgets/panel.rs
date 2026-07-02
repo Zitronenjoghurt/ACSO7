@@ -100,7 +100,7 @@ impl<'a> Panel<'a> {
     }
 }
 
-fn center(area: Rect, width: u16, rows: u16) -> Rect {
+pub(crate) fn center(area: Rect, width: u16, rows: u16) -> Rect {
     let [_, v, _] = Layout::vertical([
         Constraint::Fill(1),
         Constraint::Length(rows),

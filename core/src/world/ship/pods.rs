@@ -39,6 +39,10 @@ impl Pods {
     }
 
     pub fn alerts(&self) -> Vec<Alert> {
+        if self.pods.is_empty() {
+            return vec![Alert::critical("ALL PODS DESTROYED")];
+        }
+
         let mut alerts = Vec::new();
         if self.life_support_failing() {
             alerts.push(Alert::critical("LIFE SUPPORT LOSS"));

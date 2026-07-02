@@ -4,6 +4,7 @@ pub mod chrome;
 pub mod log_view;
 pub mod padded_line;
 pub mod panel;
+pub mod popup;
 pub mod readout;
 pub mod resources;
 pub mod select_list;

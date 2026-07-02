@@ -82,14 +82,7 @@ impl Screen for ResourceScreen {
     }
 
     fn on_input(app: &mut App, input: Input) {
-        let count = ShipResource::iter().count();
         match input {
-            Input::ArrowUp => {
-                app.ui.resource_selected = (app.ui.resource_selected + count - 1) % count;
-            }
-            Input::ArrowDown => {
-                app.ui.resource_selected = (app.ui.resource_selected + 1) % count;
-            }
             Input::Char('-') => {
                 app.ui.history_tier =
                     (app.ui.history_tier + 1).min(ResourceHistory::TIER_COUNT - 1);

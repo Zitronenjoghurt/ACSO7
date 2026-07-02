@@ -164,7 +164,9 @@ pub fn fmt_compact(v: f64) -> String {
         format!("{:.1}k", v / 1.0e3)
     } else if a >= 10.0 {
         format!("{v:.0}")
-    } else {
+    } else if a >= 0.05 || a == 0.0 {
         format!("{v:.1}")
+    } else {
+        format!("{v:.1e}")
     }
 }

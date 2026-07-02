@@ -1,7 +1,7 @@
 use crate::ui::theme::{Theme, ThemeStyles};
 use crate::ui::widgets::chart::fmt_compact;
 use crate::ui::widgets::panel::Panel;
-use crate::world::ship::resources::history::{MIN_RATE, SourceFlow};
+use crate::world::ship::resources::history::SourceFlow;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::prelude::{Line, Span, Text, Widget};
@@ -31,13 +31,13 @@ impl Widget for SourceBreakdown<'_> {
                 .iter()
                 .flat_map(|s| {
                     let mut flow: Vec<Span> = Vec::new();
-                    if s.produced >= MIN_RATE {
+                    if s.produced > 0.0 {
                         flow.push(Span::styled(
                             format!("  +{}/s", fmt_compact(s.produced)),
                             self.theme.good(),
                         ));
                     }
-                    if s.consumed >= MIN_RATE {
+                    if s.consumed > 0.0 {
                         flow.push(Span::styled(
                             format!("  -{}/s", fmt_compact(s.consumed)),
                             self.theme.error(),

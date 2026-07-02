@@ -7,8 +7,6 @@ pub type Points = Vec<(f64, f64)>;
 
 type Stock = HashMap<ShipResource, f64>;
 
-pub const MIN_RATE: f64 = 0.05;
-
 const TIERS: [(f64, usize, &str); 8] = [
     (0.1, 100, "10 S"),
     (1.0, 120, "2 MIN"),
@@ -112,6 +110,7 @@ impl Default for ResourceHistory {
 
 impl ResourceHistory {
     pub const TIER_COUNT: usize = TIERS.len();
+    pub const DEFAULT_TIER: usize = 1;
 
     pub fn tier_label(tier: usize) -> &'static str {
         TIERS[tier.min(TIERS.len() - 1)].2
@@ -194,7 +193,7 @@ impl ResourceHistory {
                 produced: flow.produced / tier.interval,
                 consumed: flow.consumed / tier.interval,
             })
-            .filter(|s| s.produced >= MIN_RATE || s.consumed >= MIN_RATE)
+            .filter(|s| s.produced > 0.0 || s.consumed > 0.0)
             .collect();
         rows.sort_by(|a, b| (b.produced + b.consumed).total_cmp(&(a.produced + a.consumed)));
         rows
@@ -269,12 +268,12 @@ mod tests {
     }
 
     #[test]
-    fn hides_negligible_flow_sources() {
+    fn shows_trace_flow_sources() {
         let mut history = ResourceHistory::default();
         let mut res = ShipResources::new();
-        res.produce(FlowSource::Reactor, &ShipResource::Heat, 0.01);
+        res.produce(FlowSource::Reactor, &ShipResource::Heat, 0.0001);
         history.advance(1.0, &mut res);
-        assert!(history.sources_of(1, ShipResource::Heat).is_empty());
+        assert_eq!(history.sources_of(1, ShipResource::Heat).len(), 1);
     }
 
     #[test]

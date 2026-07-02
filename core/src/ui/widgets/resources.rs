@@ -82,9 +82,9 @@ impl Widget for Resources<'_> {
 }
 
 fn trend(rate: f64, theme: &Theme) -> (&'static str, ratatui::style::Style) {
-    if rate > 1e-3 {
+    if rate > 1e-12 {
         ("▲", theme.good())
-    } else if rate < -1e-3 {
+    } else if rate < -1e-12 {
         ("▼", theme.error())
     } else {
         (" ", theme.normal())

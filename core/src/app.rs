@@ -13,6 +13,7 @@ pub struct App {
     pub last_autosave: jiff::Timestamp,
     pub last_frame: jiff::Timestamp,
     pub last_update: jiff::Timestamp,
+    pub performance: crate::performance::Performance,
     pub should_quit: bool,
     pub ui: UiState,
     pub world: World,
@@ -32,6 +33,7 @@ impl App {
             last_autosave: now,
             last_frame: now,
             last_update: now,
+            performance: Default::default(),
             should_quit: false,
             ui: UiState::default(),
             world: World::default(),
@@ -42,6 +44,8 @@ impl App {
     }
 
     pub fn update(&mut self) {
+        self.performance.update.start();
+
         let now = jiff::Timestamp::now();
         if self.config.autosave_interval_secs != 0
             && !self.world.meta.id.is_empty()
@@ -62,9 +66,13 @@ impl App {
             }
         }
         self.last_update += jiff::SignedDuration::from_secs_f64(dt);
+
+        self.performance.update.stop();
     }
 
     pub fn render(&mut self, frame: &mut ratatui::Frame) {
+        self.performance.render.start();
+
         self.ui.current_screen.render(self, frame);
 
         let now = jiff::Timestamp::now();
@@ -75,6 +83,8 @@ impl App {
         let area = frame.area();
         self.effects
             .process_effects(delta, frame.buffer_mut(), area);
+
+        self.performance.render.stop();
     }
 
     pub fn goto(&mut self, screen: ScreenId) {
@@ -84,7 +94,10 @@ impl App {
 
     pub fn enter_ship(&mut self) {
         self.ui.ship_focus = ShipFocus::Systems;
-        self.ui.system_selected = 0;
+        self.ui.system_selected = crate::ui::screens::SHIP_SYSTEMS
+            .iter()
+            .position(|&s| s == ScreenId::Pods)
+            .unwrap_or(0);
         self.goto(ScreenId::Pods);
     }
 
@@ -129,6 +142,12 @@ impl App {
     }
 
     pub fn on_input(&mut self, input: Input) {
+        if let Some(popup) = self.ui.popup.as_mut() {
+            if !popup.on_input(input) {
+                self.ui.popup = None;
+            }
+            return;
+        }
         self.ui.current_screen.on_input(self, input);
     }
 }
@@ -144,8 +163,8 @@ mod tests {
     use super::*;
     use crate::persistence::NullBackend;
     use crate::world::ship::resources::ShipResource;
-    use ratatui::backend::TestBackend;
     use ratatui::Terminal;
+    use ratatui::backend::TestBackend;
 
     #[test]
     fn renders_resource_screen_with_history() {
@@ -158,11 +177,11 @@ mod tests {
         }
 
         app.enter_ship();
-        app.ui.ship_focus = ShipFocus::Resources;
+        app.on_input(Input::Tab);
+        assert_eq!(app.ui.ship_focus, ShipFocus::Resources);
         app.on_input(Input::ArrowDown);
         assert_eq!(app.ui.current_screen, ScreenId::Resource);
-        app.on_input(Input::Enter);
-        assert_eq!(app.ui.ship_focus, ShipFocus::Content);
+        app.on_input(Input::Char('-'));
 
         let mut terminal = Terminal::new(TestBackend::new(120, 40)).unwrap();
         let screen = app.ui.current_screen;

@@ -17,7 +17,7 @@ impl Screen for PodsScreen {
         let pods = &app.world.ship.pods;
 
         let mut readout = Readout::new("LIFE PODS", theme)
-            .focused(app.ui.ship_focus == ShipFocus::Content)
+            .focused(app.ui.ship_focus == ShipFocus::Systems)
             .stat("POPULATION", pods.pods.len().to_string())
             .bar("INTEGRITY", pods.avg_health())
             .bar("POWER", pods.power_saturation);
@@ -33,7 +33,7 @@ impl Screen for PodsScreen {
         readout
             .blank()
             .line(
-                Line::from(format!("[ ⏎  VIEW {} COLONISTS  → ]", pods.pods.len()))
+                Line::from(format!("[ ⏎  VIEW {} COLONISTS ]", pods.pods.len()))
                     .style(theme.good())
                     .centered(),
             )
@@ -43,6 +43,7 @@ impl Screen for PodsScreen {
     fn on_input(app: &mut App, input: Input) {
         if let Input::Enter = input {
             app.goto(ScreenId::Colonists);
+            app.ui.ship_focus = ShipFocus::Content;
         }
     }
 }

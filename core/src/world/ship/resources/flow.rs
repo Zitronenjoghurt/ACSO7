@@ -8,6 +8,7 @@ use strum::EnumIter;
 pub enum FlowSource {
     Reactor,
     LifeSupport,
+    TritiumDecay,
 }
 
 impl FlowSource {
@@ -15,6 +16,7 @@ impl FlowSource {
         match self {
             FlowSource::Reactor => "REACTOR",
             FlowSource::LifeSupport => "LIFE SUPPORT",
+            FlowSource::TritiumDecay => "TRITIUM DECAY",
         }
     }
 }

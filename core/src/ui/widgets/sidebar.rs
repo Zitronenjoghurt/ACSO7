@@ -1,5 +1,5 @@
 use crate::app::App;
-use crate::ui::screens::{SHIP_SYSTEMS, ScreenId, ShipFocus};
+use crate::ui::screens::{SHIP_SYSTEMS, ScreenId, ShipFocus, VitalCol};
 use crate::ui::theme::{Theme, ThemeStyles};
 use crate::ui::widgets::alerts::Alerts;
 use crate::ui::widgets::panel::Panel;
@@ -10,6 +10,8 @@ use ratatui::prelude::{Line, Text, Widget};
 use ratatui::style::Modifier;
 use ratatui::text::Span;
 use ratatui::widgets::Padding;
+
+const COL_INDENT: &str = "      ";
 
 pub struct Sidebar<'a> {
     app: &'a App,
@@ -35,34 +37,29 @@ impl Widget for Sidebar<'_> {
 
         let mut lines: Vec<Line> = Vec::new();
         for (i, sys) in SHIP_SYSTEMS.iter().enumerate() {
-            let (ratio, value) = sys.vital(self.app);
             let alerts = sys.alerts(self.app);
             let widget = Alerts::new(&alerts, theme).indent(5);
-            lines.push(system_row(
+            lines.push(label_row(
                 *sys,
-                ratio,
-                &value,
                 i == selected && show,
                 focus,
                 widget.top_level(),
                 theme,
             ));
+            lines.push(vitals_row(&sys.vitals(self.app), theme));
             lines.extend(widget.lines());
         }
         Text::from(lines).render(inner, buf);
     }
 }
 
-fn system_row<'a>(
+fn label_row<'a>(
     sys: ScreenId,
-    ratio: f64,
-    value: &str,
     active: bool,
     focus: ShipFocus,
     alert: Option<AlertLevel>,
     theme: &Theme,
 ) -> Line<'a> {
-    let r = ratio.clamp(0.0, 1.0);
     let focused = active && focus == ShipFocus::Systems;
     let (marker, marker_style) = if !active {
         (" ", theme.normal())
@@ -80,8 +77,28 @@ fn system_row<'a>(
     Line::from(vec![
         Span::styled(format!("[{}] ", sys.hotkey()), theme.danger()),
         Span::styled(marker, marker_style),
-        Span::styled(format!("{:<11}", sys.system_label()), label_style),
-        Span::styled(format!("{:>3.0}% ", r * 100.0), theme.saturation(r)),
-        Span::styled(format!("{value:>7}"), theme.normal()),
+        Span::styled(format!(" {}", sys.system_label()), label_style),
     ])
+}
+
+fn vitals_row<'a>(cols: &[VitalCol], theme: &Theme) -> Line<'a> {
+    let mut spans = vec![Span::raw(COL_INDENT)];
+    for (i, col) in cols.iter().enumerate() {
+        if i > 0 {
+            spans.push(Span::raw("  "));
+        }
+        match col {
+            VitalCol::Gauge { glyph, ratio } => {
+                let r = ratio.clamp(0.0, 1.0);
+                spans.push(Span::styled(
+                    format!("{glyph}{:>3.0}%", r * 100.0),
+                    theme.saturation(r),
+                ));
+            }
+            VitalCol::Text { glyph, value } => {
+                spans.push(Span::styled(format!("{glyph}{value}"), theme.normal()));
+            }
+        }
+    }
+    Line::from(spans)
 }
