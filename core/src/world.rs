@@ -63,7 +63,7 @@ mod tests {
     fn starved_pods_raise_alerts_and_emit_events() {
         let mut world = World::new("test");
         world.ship.pods.pods.truncate(1);
-        world.ship.pods.pods[0].health = 0.005;
+        world.ship.pods.pods[0].health = 0.05;
 
         let first = world.tick(1.0);
         assert!(world.ship.pods.life_support_failing());

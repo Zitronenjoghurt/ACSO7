@@ -9,11 +9,21 @@ const TITLE: &str = "[ Autonomous Colony Ship Operator v7 ]";
 pub struct Chrome<'a> {
     theme: &'a Theme,
     footer: &'a str,
+    paused: bool,
 }
 
 impl<'a> Chrome<'a> {
     pub fn new(theme: &'a Theme, footer: &'a str) -> Self {
-        Self { theme, footer }
+        Self {
+            theme,
+            footer,
+            paused: false,
+        }
+    }
+
+    pub fn paused(mut self, paused: bool) -> Self {
+        self.paused = paused;
+        self
     }
 
     pub fn render(self, area: Rect, buf: &mut Buffer) -> Rect {
@@ -26,13 +36,19 @@ impl<'a> Chrome<'a> {
         ])
         .areas(area);
 
+        let edge = if self.paused {
+            self.theme.danger()
+        } else {
+            self.theme.normal()
+        };
+
         PaddedLine::new(TITLE)
             .padding_symbol('═')
-            .style(self.theme.normal())
+            .style(edge)
             .render(header, buf);
         PaddedLine::new(self.footer)
             .padding_symbol('═')
-            .style(self.theme.normal())
+            .style(edge)
             .render(footer, buf);
 
         content

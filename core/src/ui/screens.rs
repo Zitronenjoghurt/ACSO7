@@ -91,16 +91,16 @@ impl ScreenId {
             Self::Title => "[ ↑↓ SELECT │ ⏎ CONFIRM ]",
             Self::NewWorld => "[ TYPE NAME │ ⏎ CREATE │ ESC BACK ]",
             Self::Load => "[ ↑↓ SELECT │ ⏎ LOAD │ ESC BACK ]",
-            Self::Debug => "[ ESC CLOSE │ Q QUIT ]",
+            Self::Debug => "[ ␣ PAUSE │ ESC CLOSE │ Q QUIT ]",
             _ => match app.ui.ship_focus {
                 ShipFocus::Systems => {
-                    "[ ↑↓ SYSTEM │ →/⇥ RESOURCES │ D DEBUG │ ? HELP │ ESC EXIT │ Q QUIT ]"
+                    "[ ↑↓ SYSTEM │ →/⇥ RESOURCES │ ␣ PAUSE │ D DEBUG │ ? HELP │ ESC EXIT │ Q QUIT ]"
                 }
                 ShipFocus::Resources => {
-                    "[ ↑↓ RESOURCE │ - + RANGE │ ←/⇥ SYSTEMS │ D DEBUG │ ? HELP │ ESC EXIT │ Q ]"
+                    "[ ↑↓ RESOURCE │ - + RANGE │ ␣ PAUSE │ D DEBUG │ ? HELP │ ESC EXIT │ Q ]"
                 }
                 ShipFocus::Content => {
-                    "[ ↑↓ SCROLL │ , . PAGE │ HOME/END JUMP │ ? HELP │ ESC BACK │ Q QUIT ]"
+                    "[ ↑↓ SCROLL │ , . PAGE │ ␣ PAUSE │ ? HELP │ ESC BACK │ Q QUIT ]"
                 }
             },
         }
@@ -167,7 +167,9 @@ impl ScreenId {
     pub fn render(self, app: &App, frame: &mut ratatui::Frame) {
         let area = frame.area();
         let buf = frame.buffer_mut();
-        let content = Chrome::new(&app.config.theme, self.footer(app)).render(area, buf);
+        let content = Chrome::new(&app.config.theme, self.footer(app))
+            .paused(app.paused)
+            .render(area, buf);
 
         if self.in_shell() {
             render_shell(self, app, content, buf);
@@ -228,6 +230,10 @@ fn render_shell(screen: ScreenId, app: &App, area: Rect, buf: &mut Buffer) {
 
 fn shell_on_input(screen: ScreenId, app: &mut App, input: Input) {
     match input {
+        Input::Char(' ') => {
+            app.toggle_pause();
+            return;
+        }
         Input::Char('d') => {
             toggle_debug(app);
             return;
@@ -349,6 +355,7 @@ fn content_back(screen: ScreenId, app: &mut App) {
 }
 
 fn exit_to_title(app: &mut App) {
+    app.paused = false;
     app.autosave().unwrap();
     app.goto(ScreenId::Title);
 }

@@ -47,7 +47,9 @@ impl<'a> Shell<'a> {
         .showing(self.app.ui.current_screen == ScreenId::Resource)
         .selected(self.app.ui.resource_selected)
         .render(resources, buf);
-        StatusBar::new(theme, self.app.world.mission_secs).render(status, buf);
+        StatusBar::new(theme, self.app.world.mission_secs)
+            .paused(self.app.paused)
+            .render(status, buf);
         LogView::new(&self.app.ui.log, theme).render(log, buf);
 
         main

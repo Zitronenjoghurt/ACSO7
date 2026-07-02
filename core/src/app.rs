@@ -2,7 +2,7 @@ use crate::config::Config;
 use crate::error::Acos7Result;
 use crate::input::Input;
 use crate::persistence::{CompressedSerde, PersistenceBackend, WorldStore};
-use crate::ui::effects::Effects;
+use crate::ui::effects::{Effects, FxKey, pause_fx};
 use crate::ui::{ScreenId, ShipFocus, UiState};
 use crate::world::{World, WorldId};
 
@@ -13,6 +13,7 @@ pub struct App {
     pub last_autosave: jiff::Timestamp,
     pub last_frame: jiff::Timestamp,
     pub last_update: jiff::Timestamp,
+    pub paused: bool,
     pub performance: crate::performance::Performance,
     pub should_quit: bool,
     pub ui: UiState,
@@ -33,6 +34,7 @@ impl App {
             last_autosave: now,
             last_frame: now,
             last_update: now,
+            paused: false,
             performance: Default::default(),
             should_quit: false,
             ui: UiState::default(),
@@ -47,6 +49,11 @@ impl App {
         self.performance.update.start();
 
         let now = jiff::Timestamp::now();
+        if self.paused {
+            self.last_update = now;
+            self.performance.update.stop();
+            return;
+        }
         if self.config.autosave_interval_secs != 0
             && !self.world.meta.id.is_empty()
             && now.duration_since(self.last_autosave).as_secs()
@@ -135,6 +142,12 @@ impl App {
             }
             None => false,
         }
+    }
+
+    pub fn toggle_pause(&mut self) {
+        self.paused = !self.paused;
+        self.effects
+            .add_unique_effect(FxKey::PauseToggle, pause_fx(&self.config.theme));
     }
 
     pub fn should_quit(&self) -> bool {
